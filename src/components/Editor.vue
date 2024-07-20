@@ -232,6 +232,7 @@ worker.addEventListener('message', (event: any) => {
 	loading.value = false;
 });
 
+// eslint-disable-next-line complexity
 const processCode = () => {
 	const { value } = debouncedInput;
 
@@ -244,14 +245,34 @@ const processCode = () => {
 		return;
 	}
 
+	const globalIdentifiers = {
+		$message: 'message',
+	};
+
+	const globalContextIdentifiers = {
+		$message: 'const [messageApi, contextHolder] = message.useMessage()',
+	};
+
+	const globalImportDeclarations = {
+		$message: "import { message } from 'ant-design-vue'",
+	};
+
 	try {
 		loading.value = true;
 		const ParseInput = new Parser(
 			value, {
 				showSectionComment: showSectionComment.value,
+				globalIdentifiers,
+				globalContextIdentifiers,
+				globalImportDeclarations,
 			}
 		);
-		const { imports, output, importDeclarations } = ParseInput.parse();
+		const { imports, output, importDeclarations, contexts } = ParseInput.parse();
+
+		// Add global context identifiers
+		if (contexts.length > 0){
+			output.unshift(...contexts);
+		}
 
 		// Add required imports (e.g. ref, computed, etc.)
 		if (imports.length > 0) {

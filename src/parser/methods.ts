@@ -40,6 +40,10 @@ class MethodParser {
 	 */
 	selfIdentifiers :string[] = [];
 
+	globalIdentifiers : Record<string, string> = {};
+
+	useGlobalIdentifiers : Set<string> = new Set<string>;
+
 	/**
 	 * Holds the type of method (computed, watch .. etc)
 	 */
@@ -125,6 +129,11 @@ class MethodParser {
 		return this;
 	}
 
+	setGlobalIdentifiers (globalIdentifiers: Record<string, string>) :this {
+		this.globalIdentifiers = globalIdentifiers;
+		return this;
+	}
+
 	/**
 	 * Get method identifiers
 	 *
@@ -143,6 +152,10 @@ class MethodParser {
 		return this.computedIdentifiers;
 	}
 
+	getUseGlobalIdentifiers (): Set<string> {
+		return this.useGlobalIdentifiers;
+	}
+
 	/**
 	 * Replace `this` keyword inside function body with
 	 * relevant reactive property. Regex is used instead of
@@ -153,6 +166,7 @@ class MethodParser {
 	 */
 	replaceThisKeyword(functionBody: string) :string {
 		/*eslint complexity: ["warn", 9]*/
+		// eslint-disable-next-line complexity
 		return functionBody.replaceAll(/this.(?<id>[\w$]+)/ug, (match, identifier) => {
 			const type = this.dataIdentifiers[identifier];
 
@@ -177,6 +191,13 @@ class MethodParser {
 			const isProperty = this.propsIdentifiers.includes(identifier);
 			if (isProperty) {
 				return `props.${identifier}`;
+			}
+
+			// check if identifier is a global context identifier
+			const isGlobalContext = this.globalIdentifiers[identifier];
+			if (isGlobalContext) {
+				this.useGlobalIdentifiers.add(identifier);
+				return isGlobalContext;
 			}
 
 			return match;

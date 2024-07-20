@@ -74,6 +74,14 @@ class Parser {
 	 */
 	showSectionComment = true;
 
+	globalIdentifiers :Record<string, string> = {};
+
+	globalContextIdentifiers : Record<string, string> = {};
+
+	globalImportDeclarations : Record<string, string> = {};
+
+	useGlobalIdentifiers : Set<string> = new Set<string>;
+
 	/**
 	 * Constructor
 	 *
@@ -203,9 +211,13 @@ class Parser {
 			.setfullInput(this.input)
 			.setDataIdentifiers(this.dataIdentifiers)
 			.setPropsIdentifiers(this.propsIdentifiers)
+			.setGlobalIdentifiers(this.globalIdentifiers)
 			.convert();
 
 		this.methodIdentifiers = methodParser.getMethodIdentifiers();
+		for (const value of methodParser.getUseGlobalIdentifiers().values()){
+			this.useGlobalIdentifiers.add(value);
+		}
 		this.outputAddLines('', this.commentInlineSection('Methods'), ...convertedMethods);
 	}
 
@@ -293,10 +305,18 @@ class Parser {
 			callbackFunction.call(this, properties[key], key);
 		}
 
+		const contexts: string[] = [];
+		const importDeclarations = this.getImportDeclaration();
+		for (const value of this.useGlobalIdentifiers.values()){
+			importDeclarations.push(this.globalImportDeclarations[value]);
+			contexts.push(this.globalContextIdentifiers[value]);
+		}
+
 		return {
-			importDeclarations: this.getImportDeclaration(),
+			importDeclarations,
 			output: this.output,
 			imports: this.imports,
+			contexts,
 		};
 	}
 }
