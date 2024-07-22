@@ -26,6 +26,10 @@ class Lifecycle {
 	 */
 	propsIdentifiers :string[] = [];
 
+	globalIdentifiers : Record<string, string> = {};
+
+	useGlobalIdentifiers : Set<string> = new Set<string>;
+
 	/**
 	 * AST of the lifecycle object
 	 */
@@ -105,6 +109,11 @@ class Lifecycle {
 		return this;
 	}
 
+	setGlobalIdentifiers (globalIdentifiers: Record<string, string>) :this {
+		this.globalIdentifiers = globalIdentifiers;
+		return this;
+	}
+
 	/**
 	 * Set computed identifiers to replace `this` keyword inside  functions
 	 *
@@ -125,10 +134,18 @@ class Lifecycle {
 	 * @return {string}              The updated function body
 	 */
 	replaceThisKeyword(functionBody: string) :string {
+		// eslint-disable-next-line complexity
 		return functionBody.replaceAll(/this.(?<id>[\w$]+)/ug, (match, identifier) => {
 			const type = this.dataIdentifiers[identifier];
 			if (type) {
 				return (type === 'ref') ? `${identifier}.value` : identifier;
+			}
+
+			// check if identifier is a global context identifier
+			const isGlobalContext = this.globalIdentifiers[identifier];
+			if (isGlobalContext) {
+				this.useGlobalIdentifiers.add(identifier);
+				return isGlobalContext;
 			}
 
 			// Check if identifier is a method or computed

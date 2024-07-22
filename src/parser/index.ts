@@ -169,6 +169,7 @@ class Parser {
 			.setPropsIdentifiers(this.propsIdentifiers)
 			.setMethodIdentifiers(this.methodIdentifiers)
 			.setComputedIdentifiers(this.computedIdentifiers)
+			.setGlobalIdentifiers(this.globalIdentifiers)
 			.setType(key)
 			.convert();
 
@@ -235,9 +236,14 @@ class Parser {
 			.setDataIdentifiers(this.dataIdentifiers)
 			.setMethodIdentifiers(this.methodIdentifiers)
 			.setPropsIdentifiers(this.propsIdentifiers)
+			.setGlobalIdentifiers(this.globalIdentifiers)
 			.convert();
 
 		this.computedIdentifiers = methodParser.getComputedIdentifiers();
+
+		for (const value of methodParser.getUseGlobalIdentifiers().values()){
+			this.useGlobalIdentifiers.add(value);
+		}
 
 		this.outputAddLines('', this.commentInlineSection('Computed'), ...convertedMethods);
 		this.imports.push('computed');
@@ -258,8 +264,12 @@ class Parser {
 			.setMethodIdentifiers(this.methodIdentifiers)
 			.setPropsIdentifiers(this.propsIdentifiers)
 			.setComputedIdentifiers(this.computedIdentifiers)
+			.setGlobalIdentifiers(this.globalIdentifiers)
 			.convert();
 
+		for (const value of methodParser.getUseGlobalIdentifiers().values()){
+			this.useGlobalIdentifiers.add(value);
+		}
 		this.outputAddLines('', this.commentInlineSection('Watch'), ...convertedMethods);
 		this.imports.push('watch');
 	}
